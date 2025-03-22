@@ -1,95 +1,148 @@
 using System;
 using System.Collections.Generic;
-
-class Word
-{
-    public string Text { get; private set; }
-    public bool IsVisible { get; private set; }
-
-    public Word(string text)
-    {
-        Text = text;
-        IsVisible = true; // Default visibility is true
-    }
-
-    public void Hide() => IsVisible = false;
-    public void Show() => IsVisible = true;
-}
-
-class Reference
-{
-    public string Book { get; private set; }
-    public int Chapter { get; private set; }
-    public int StartVerse { get; private set; }
-    public int? EndVerse { get; private set; } // Nullable for single-verse references
-
-    // Single-verse constructor
-    public Reference(string book, int chapter, int verse)
-    {
-        Book = book;
-        Chapter = chapter;
-        StartVerse = verse;
-        EndVerse = null;
-    }
-
-    // Multi-verse constructor
-    public Reference(string book, int chapter, int startVerse, int endVerse)
-    {
-        Book = book;
-        Chapter = chapter;
-        StartVerse = startVerse;
-        EndVerse = endVerse;
-    }
-
-    public override string ToString()
-    {
-        return EndVerse.HasValue ? $"{Book} {Chapter}:{StartVerse}-{EndVerse}" : $"{Book} {Chapter}:{StartVerse}";
-    }
-}
-
-class Scripture
-{
-    public Reference ScriptureReference { get; private set; }
-    private List<Word> Words { get; set; }
-
-    public Scripture(string book, int chapter, int verse, string text)
-    {
-        ScriptureReference = new Reference(book, chapter, verse);
-        Words = CreateWordList(text);
-    }
-
-    public Scripture(string book, int chapter, int startVerse, int endVerse, string text)
-    {
-        ScriptureReference = new Reference(book, chapter, startVerse, endVerse);
-        Words = CreateWordList(text);
-    }
-
-    private List<Word> CreateWordList(string text)
-    {
-        var words = new List<Word>();
-        foreach (var word in text.Split(' '))
-        {
-            words.Add(new Word(word));
-        }
-        return words;
-    }
-
-    public void Display()
-    {
-        Console.Write($"{ScriptureReference}: ");
-        foreach (var word in Words)
-        {
-            Console.Write(word.IsVisible ? word.Text + " " : "_____ ");
-        }
-        Console.WriteLine();
-    }
-}
+using System.IO;
+using System.Linq;
 
 class Program
 {
     static void Main()
     {
-        Scripture scripture = new Scripture("John", 3, 16, "For God so loved the world, That He give His only Begotten Son, that whosover believe in Him shall not perish , but have everlasting life");
-        scripture.Display();
+        Console.WriteLine("Would you like to enter your own scripture? (yes/no)");
+        string userResponse = Console.ReadLine().ToLower();
+        Scripture scripture;
+
+        if (userResponse == "yes")
+        {
+            Console.Write("Enter the scripture reference (e.g., John 3:16): ");
+            string reference = Console.ReadLine();
+            Console.Write("Enter the scripture text: ");
+            string text = Console.ReadLine();
+            scripture = new Scripture(new ScriptureReference(reference), text);
+        }
+        else
+        {
+            List<Scripture> scriptures = LoadScriptures("scriptures.txt");
+            scripture = scriptures[new Random().Next(scriptures.Count)];
+        }
+        
+        Random random = new Random();
+        while (!scripture.IsCompletelyHidden())
+        {
+            Console.Clear();
+            Console.WriteLine(scripture.GetDisplayText());
+            Console.WriteLine("\nPress Enter to hide words, type 'reveal' to show hidden words, or type 'quit' to exit.");
+            string input = Console.ReadLine().ToLower();
+            
+            if (input == "quit")
+                return;
+            if (input == "reveal")
+                scripture.RevealWords();
+            else
+                scripture.HideRandomWords(random, 3);
+        }
+    }
+
+    static List<Scripture> LoadScriptures(string filePath)
+    {
+        List<Scripture> scriptures = new List<Scripture>();
+        if (File.Exists(filePath))
+        {
+            string[] lines = File.ReadAllLines(filePath);
+            foreach (var line in lines)
+            {
+                string[] parts = line.Split('|');
+                if (parts.Length == 2)
+                {
+                    scriptures.Add(new Scripture(new ScriptureReference(parts[0]), parts[1]));
+                }
+            }
+        }
+        return scriptures;
+    }
+}
+
+class ScriptureReference
+{
+    public string Book { get; }
+    public string ChapterVerse { get; }
+
+    public ScriptureReference(string reference)
+    {
+        var parts = reference.Split(' ');
+        Book = parts[0];
+        ChapterVerse = parts.Length > 1 ? parts[1] : "";
+    }
+
+    public override string ToString()
+    {
+        return $"{Book} {ChapterVerse}".Trim();
+    }
+}
+
+class Word
+{
+    public string Text { get; }
+    public bool IsHidden { get; private set; }
+
+    public Word(string text)
+    {
+        Text = text;
+        IsHidden = false;
+    }
+
+    public void Hide()
+    {
+        IsHidden = true;
+    }
+
+    public void Reveal()
+    {
+        IsHidden = false;
+    }
+
+    public override string ToString()
+    {
+        return IsHidden ? new string('_', Text.Length) : Text;
+    }
+}
+
+class Scripture
+{
+    public ScriptureReference Reference { get; }
+    private List<Word> Words { get; }
+
+    public Scripture(ScriptureReference reference, string text)
+    {
+        Reference = reference;
+        Words = text.Split(' ').Select(word => new Word(word)).ToList();
+    }
+
+    public string GetDisplayText()
+    {
+        return $"{Reference}\n{string.Join(" ", Words)}";
+    }
+
+    public void HideRandomWords(Random random, int count)
+    {
+        var visibleWords = Words.Where(w => !w.IsHidden).ToList();
+        for (int i = 0; i < count && visibleWords.Count > 0; i++)
+        {
+            var wordToHide = visibleWords[random.Next(visibleWords.Count)];
+            wordToHide.Hide();
+            visibleWords.Remove(wordToHide);
+        }
+    }
+
+    public void RevealWords()
+    {
+        foreach (var word in Words)
+        {
+            word.Reveal();
+        }
+    }
+
+    public bool IsCompletelyHidden()
+    {
+        return Words.All(w => w.IsHidden);
     }
 }
