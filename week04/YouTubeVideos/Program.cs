@@ -11,6 +11,11 @@ public class Comment
         CommenterName = commenterName;
         Text = text;
     }
+
+    public override string ToString()
+    {
+        return $"{CommenterName}: {Text}";
+    }
 }
 
 public class Video
@@ -18,13 +23,14 @@ public class Video
     public string Title { get; set; }
     public string Author { get; set; }
     public int Length { get; set; }
-    private List<Comment> Comments { get; set; } = new List<Comment>();
+    private List<Comment> Comments { get; set; }
 
     public Video(string title, string author, int length)
     {
         Title = title;
         Author = author;
         Length = length;
+        Comments = new List<Comment>();
     }
 
     public void AddComment(Comment comment)
@@ -32,17 +38,18 @@ public class Video
         Comments.Add(comment);
     }
 
-    public int GetCommentCount() => Comments.Count;
-
-    public void DisplayVideoDetails()
+    public int GetCommentCount()
     {
-        Console.WriteLine($"Title: {Title}");
-        Console.WriteLine($"Author: {Author}");
-        Console.WriteLine($"Length: {Length} seconds");
-        Console.WriteLine($"Comments ({GetCommentCount()}):");
+        return Comments.Count;
+    }
+
+    public void DisplayInfo()
+    {
+        TimeSpan duration = TimeSpan.FromSeconds(Length);
+        Console.WriteLine($"Title: {Title}\nAuthor: {Author}\nLength: {duration.Minutes}m {duration.Seconds}s\nComments ({GetCommentCount()}):");
         foreach (var comment in Comments)
         {
-            Console.WriteLine($"- {comment.CommenterName}: {comment.Text}");
+            Console.WriteLine(comment);
         }
         Console.WriteLine();
     }
@@ -50,30 +57,30 @@ public class Video
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        var videos = new List<Video>
+        List<Video> videos = new List<Video>
         {
-            new Video("Study Book of Mormon", "Student Home work", 200),
-            new Video("Unboxing Experience", "Gadget Guy", 250),
-            new Video("How-To Guide", "DIY Master", 400)
+            new Video("Understanding C# Classes", "John Doe", 540),
+            new Video("Advanced OOP in C#", "Jane Smith", 720),
+            new Video("C# Tips and Tricks", "Alex Brown", 300)
         };
 
-        videos[0].AddComment(new Comment("Koweh", "Great Study!"));
-        videos[0].AddComment(new Comment("Bob", "Very informative."));
-        videos[0].AddComment(new Comment("Charlie", "Loved it!"));
+        videos[0].AddComment(new Comment("Alice", "Great explanation!"));
+        videos[0].AddComment(new Comment("Bob", "Very helpful, thanks!"));
+        videos[0].AddComment(new Comment("Charlie", "Loved the examples."));
 
-        videos[1].AddComment(new Comment("Diana", "So cool!"));
-        videos[1].AddComment(new Comment("Eve", "Can’t wait to try this."));
-        videos[1].AddComment(new Comment("Frank", "Looks awesome!"));
+        videos[1].AddComment(new Comment("Dave", "This is gold!"));
+        videos[1].AddComment(new Comment("Eve", "Learned a lot!"));
+        videos[1].AddComment(new Comment("Frank", "Could use more examples."));
 
-        videos[2].AddComment(new Comment("George", "This helped a lot."));
-        videos[2].AddComment(new Comment("Naomi", "Clear and concise."));
-        videos[2].AddComment(new Comment("Emma", "Perfect guide!"));
+        videos[2].AddComment(new Comment("Grace", "Nice tips!"));
+        videos[2].AddComment(new Comment("Heidi", "Really useful content."));
+        videos[2].AddComment(new Comment("Ivan", "Short and sweet."));
 
         foreach (var video in videos)
         {
-            video.DisplayVideoDetails();
+            video.DisplayInfo();
         }
     }
 }
