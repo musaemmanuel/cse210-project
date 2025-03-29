@@ -3,31 +3,34 @@ using System.Collections.Generic;
 
 public class Address
 {
-    private string StreetAddress { get; set; }
-    private string City { get; set; }
-    private string State { get; set; }
-    private string Country { get; set; }
+    private string Street;
+    private string City;
+    private string State;
+    private string Country;
 
-    public Address(string streetAddress, string city, string state, string country)
+    public Address(string street, string city, string state, string country)
     {
-        StreetAddress = streetAddress;
+        Street = street;
         City = city;
         State = state;
         Country = country;
     }
 
-    public bool IsInNIGERIA() => Country.ToLower() == "Nigeria";
+    public bool IsInUSA()
+    {
+        return Country.ToLower() == "usa";
+    }
 
     public string GetFullAddress()
     {
-        return $"{StreetAddress}\n{City}, {State}\n{Country}";
+        return $"{Street}\n{City}, {State}\n{Country}";
     }
 }
 
 public class Customer
 {
-    private string Name { get; set; }
-    private Address Address { get; set; }
+    private string Name;
+    private Address Address;
 
     public Customer(string name, Address address)
     {
@@ -35,22 +38,23 @@ public class Customer
         Address = address;
     }
 
-    public bool LivesInUSA() => Address.IsInNIGERIA();
-
-    public string GetShippingLabel()
+    public bool LivesInUSA()
     {
-        return $"{Name}\n{Address.GetFullAddress()}";
+        return Address.IsInUSA();
     }
+
+    public string GetName() => Name;
+    public string GetAddress() => Address.GetFullAddress();
 }
 
 public class Product
 {
-    private string Name { get; set; }
-    private string ProductId { get; set; }
-    private double Price { get; set; }
-    private int Quantity { get; set; }
+    private string Name;
+    private string ProductId;
+    private decimal Price;
+    private int Quantity;
 
-    public Product(string name, string productId, double price, int quantity)
+    public Product(string name, string productId, decimal price, int quantity)
     {
         Name = name;
         ProductId = productId;
@@ -58,22 +62,20 @@ public class Product
         Quantity = quantity;
     }
 
-    public double GetTotalCost() => Price * Quantity;
+    public decimal TotalCost() => Price * Quantity;
 
-    public string GetPackingLabel()
-    {
-        return $"{Name} (ID: {ProductId})";
-    }
+    public string GetPackingLabel() => $"{Name} (ID: {ProductId})";
 }
 
 public class Order
 {
-    private List<Product> Products { get; set; } = new List<Product>();
-    private Customer Customer { get; set; }
+    private List<Product> Products;
+    private Customer Customer;
 
     public Order(Customer customer)
     {
         Customer = customer;
+        Products = new List<Product>();
     }
 
     public void AddProduct(Product product)
@@ -81,15 +83,15 @@ public class Order
         Products.Add(product);
     }
 
-    public double CalculateTotalCost()
+    public decimal CalculateTotalCost()
     {
-        double productTotal = 0;
+        decimal total = 0;
         foreach (var product in Products)
         {
-            productTotal += product.GetTotalCost();
+            total += product.TotalCost();
         }
-        double shippingCost = Customer.LivesInUSA() ? 5 : 35;
-        return productTotal + shippingCost;
+        total += Customer.LivesInUSA() ? 5 : 35;
+        return total;
     }
 
     public string GetPackingLabel()
@@ -97,43 +99,38 @@ public class Order
         string label = "Packing Label:\n";
         foreach (var product in Products)
         {
-            label += product.GetPackingLabel() + "\n";
+            label += $"- {product.GetPackingLabel()}\n";
         }
         return label;
     }
 
-    public string GetShippingLabel()
-    {
-        return $"Shipping Label:\n{Customer.GetShippingLabel()}";
-    }
+    public string GetShippingLabel() => $"Shipping Label:\n{Customer.GetName()}\n{Customer.GetAddress()}";
 }
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        Address address1 = new Address("123 Apple St", "ABUJA FCT", "NY", "NIGERIA");
-        Address address2 = new Address("456 Maple Ave", "Lagos", "ON", "Kano");
+        Address address1 = new Address("123 Main St", "New York", "NY", "USA");
+        Address address2 = new Address("456 Maple Rd", "Toronto", "ON", "Canada");
 
         Customer customer1 = new Customer("John Doe", address1);
         Customer customer2 = new Customer("Jane Smith", address2);
 
         Order order1 = new Order(customer1);
-        order1.AddProduct(new Product("Laptop", "P001", 1200, 1));
+        order1.AddProduct(new Product("Laptop", "P001", 1000, 1));
         order1.AddProduct(new Product("Mouse", "P002", 20, 2));
 
         Order order2 = new Order(customer2);
         order2.AddProduct(new Product("Phone", "P003", 800, 1));
         order2.AddProduct(new Product("Charger", "P004", 25, 1));
 
-        List<Order> orders = new List<Order> { order1, order2 };
+        Console.WriteLine(order1.GetPackingLabel());
+        Console.WriteLine(order1.GetShippingLabel());
+        Console.WriteLine($"Total Cost: ${order1.CalculateTotalCost()}\n");
 
-        foreach (var order in orders)
-        {
-            Console.WriteLine(order.GetPackingLabel());
-            Console.WriteLine(order.GetShippingLabel());
-            Console.WriteLine($"Total Cost: ${order.CalculateTotalCost()}");
-            Console.WriteLine();
-        }
+        Console.WriteLine(order2.GetPackingLabel());
+        Console.WriteLine(order2.GetShippingLabel());
+        Console.WriteLine($"Total Cost: ${order2.CalculateTotalCost()}\n");
     }
 }
