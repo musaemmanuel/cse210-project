@@ -100,13 +100,19 @@ class Program
 {
     static List<Goal> goals = new List<Goal>();
     static int score = 0;
+    static int simpleGoalsCompleted = 0;
+    static int eternalGoalHits = 0;
+    static int checklistGoalsCompleted = 0;
     static string filename = "goals.txt";
+
+    static int level => score / 1000;
 
     static void Main()
     {
         while (true)
         {
             Console.WriteLine($"\nYour score: {score}");
+            Console.WriteLine($"🎉 Level: {level}");
             Console.WriteLine("\nMenu:");
             Console.WriteLine("1. Create New Goal");
             Console.WriteLine("2. List Goals");
@@ -182,7 +188,28 @@ class Program
         {
             int points = goals[index].RecordEvent();
             score += points;
+
+            Goal g = goals[index];
             Console.WriteLine($"You earned {points} points!");
+            Console.WriteLine(GetMotivationMessage());
+
+            if (g is SimpleGoal && g.IsComplete())
+                simpleGoalsCompleted++;
+            if (g is EternalGoal)
+                eternalGoalHits++;
+            if (g is ChecklistGoal && g.IsComplete())
+                checklistGoalsCompleted++;
+
+            // Level up message
+            Console.WriteLine($"🎉 Level: {level}");
+
+            // Achievements
+            if (simpleGoalsCompleted == 5)
+                Console.WriteLine("🏅 Achievement unlocked: Goal Crusher!");
+            if (eternalGoalHits == 10)
+                Console.WriteLine("🏅 Achievement unlocked: Consistency Champ!");
+            if (checklistGoalsCompleted == 3)
+                Console.WriteLine("🏅 Achievement unlocked: Checklist Hero!");
         }
         else
         {
@@ -236,5 +263,21 @@ class Program
         }
 
         Console.WriteLine("Goals loaded.");
+    }
+
+    static string GetMotivationMessage()
+    {
+        string[] messages = new[]
+        {
+            "🔥 You’re on fire!",
+            "🎯 Bullseye! Goal achieved!",
+            "🚀 Progress unlocked!",
+            "💪 Keep it up, warrior!",
+            "🌟 You just got better!",
+            "🎉 That’s a win!",
+            "🙌 Another step forward!",
+        };
+        Random rand = new Random();
+        return messages[rand.Next(messages.Length)];
     }
 }
